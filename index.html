@@ -179,6 +179,13 @@
     font-size: 1.4rem; line-height: 1; cursor: pointer; border-radius: .5rem;
   }
   .usun:hover { color: var(--blad); }
+  .przenies {
+    flex: none; min-width: 2.75rem; height: 2.75rem; padding: 0 .35rem;
+    border: 0; background: none; color: var(--przygaszony);
+    font-size: 1rem; line-height: 1; cursor: pointer; border-radius: .5rem;
+    white-space: nowrap;
+  }
+  .przenies:hover, .przenies:focus-visible { background: var(--akcent-tlo); color: var(--akcent); }
   .pusta { text-align: center; color: var(--przygaszony); padding: 2rem 0; }
   .pusta .duza-emotka { display: block; }
   .stopka { margin-top: 1.5rem; font-size: .8rem; color: var(--przygaszony); text-align: center; }
@@ -280,8 +287,8 @@ const firebaseConfig = {
 
 const PIEC_GODZIN = 5 * 60 * 60 * 1000;
 const KATEGORIE = {
-  spozywcze: { domyslna: "🛒", podpowiedz: "Co dopisać do zakupów?", pusta: "Lista spożywcza jest pusta. Dopisz pierwszy produkt." },
-  online:    { domyslna: "📦", podpowiedz: "Co zamówić online?",     pusta: "Nic do zamówienia online. Dopisz pierwszą rzecz." }
+  spozywcze: { nazwa: "Spożywcze", domyslna: "🛒", podpowiedz: "Co dopisać do zakupów?", pusta: "Lista spożywcza jest pusta. Dopisz pierwszy produkt." },
+  online:    { nazwa: "Online", domyslna: "📦", podpowiedz: "Co zamówić online?",     pusta: "Nic do zamówienia online. Dopisz pierwszą rzecz." }
 };
 const $ = (id) => document.getElementById(id);
 
@@ -565,7 +572,16 @@ function rysuj() {
     x.textContent = "×";
     x.addEventListener("click", () => usun(p));
 
-    li.append(label, x);
+    const inna = aktywna === "online" ? "spozywcze" : "online";
+    const przenies = document.createElement("button");
+    przenies.type = "button";
+    przenies.className = "przenies";
+    przenies.title = `Przenieś do: ${KATEGORIE[inna].nazwa}`;
+    przenies.setAttribute("aria-label", `Przenieś „${p.tekst}” do: ${KATEGORIE[inna].nazwa}`);
+    przenies.textContent = `→ ${KATEGORIE[inna].domyslna}`;
+    przenies.addEventListener("click", () => przenies_do(p, inna));
+
+    li.append(label, przenies, x);
     ul.append(li);
   }
 }
@@ -594,6 +610,13 @@ async function przelacz(p) {
       kupione: !p.kupione,
       kupioneO: !p.kupione ? serverTimestamp() : null
     });
+  } catch (e) { komunikat(kListy, opisBledu(e), "blad"); }
+}
+async function przenies_do(p, kategoria) {
+  komunikat(kListy, "");
+  try {
+    await updateDoc(doc(db, "lista", p.id), { kategoria });
+    komunikat(kListy, `Przeniesiono „${p.tekst}” do: ${KATEGORIE[kategoria].nazwa}`, "ok");
   } catch (e) { komunikat(kListy, opisBledu(e), "blad"); }
 }
 async function usun(p) {

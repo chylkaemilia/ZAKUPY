@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Zakupy">
+<meta name="theme-color" content="#2f7d5b">
+<title>Lista zakupów</title>
+<style>
+  :root {
+    color-scheme: light;
+    --tlo: #f3f4f6;
+    --karta: #ffffff;
+    --tekst: #17212b;
+    --przygaszony: #667085;
+    --akcent: #2f7d5b;
+    --akcent-tekst: #ffffff;
+    --linia: #e3e6ec;
+    --blad: #b42318;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --tlo: #12151c;
+      --karta: #1b1f29;
+      --tekst: #edf0f5;
+      --przygaszony: #9aa3b4;
+      --akcent: #4cb487;
+      --akcent-tekst: #0b1410;
+      --linia: #2a2f3b;
+      --blad: #ff8a80;
+    }
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { height: 100%; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--tlo);
+    color: var(--tekst);
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.45;
+    -webkit-text-size-adjust: 100%;
+  }
+  .opakowanie { max-width: 34rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+  h1 { font-size: 1.5rem; margin: 0; }
+  .ukryte { display: none !important; }
+
+  input, button { font: inherit; }
+  input[type="email"], input[type="password"], input[type="text"] {
+    width: 100%;
+    padding: .8rem .9rem;
+    border: 1px solid var(--linia);
+    border-radius: .65rem;
+    background: var(--karta);
+    color: var(--tekst);
+    font-size: 1rem;           /* 16px - iOS nie przybliża strony przy wpisywaniu */
+  }
+  input:focus-visible, button:focus-visible {
+    outline: 2px solid var(--akcent);
+    outline-offset: 2px;
+  }
+  .przycisk {
+    border: 0;
+    border-radius: .65rem;
+    padding: .8rem 1.1rem;
+    background: var(--akcent);
+    color: var(--akcent-tekst);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .przycisk.drugi {
+    background: transparent;
+    color: var(--akcent);
+    border: 1px solid var(--linia);
+  }
+  .przycisk:disabled { opacity: .55; cursor: default; }
+  .link {
+    background: none; border: 0; padding: .4rem 0;
+    color: var(--przygaszony); text-decoration: underline; cursor: pointer; font-size: .9rem;
+  }
+
+  /* logowanie */
+  #logowanie { padding-top: 12vh; }
+  #logowanie p.opis { color: var(--przygaszony); margin: .4rem 0 1.5rem; }
+  #logowanie form { display: grid; gap: .7rem; }
+  .rzad { display: flex; gap: .6rem; }
+  .rzad .przycisk { flex: 1; }
+  .komunikat { min-height: 1.4rem; font-size: .9rem; margin: .2rem 0 0; }
+  .komunikat.blad { color: var(--blad); }
+  .komunikat.ok { color: var(--akcent); }
+
+  /* lista */
+  .naglowek { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+  .naglowek small { color: var(--przygaszony); display: block; font-size: .8rem; overflow-wrap: anywhere; }
+  #dodawanie { display: flex; gap: .6rem; margin-bottom: 1rem; }
+  #dodawanie input { flex: 1; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  .pozycja {
+    display: flex; align-items: center; gap: .75rem;
+    background: var(--karta);
+    border: 1px solid var(--linia);
+    border-radius: .65rem;
+    padding: .35rem .5rem .35rem .35rem;
+    margin-bottom: .5rem;
+  }
+  .pozycja label {
+    flex: 1; display: flex; align-items: center; gap: .75rem;
+    min-height: 2.75rem; cursor: pointer; padding-left: .35rem;
+  }
+  .pozycja input[type="checkbox"] {
+    width: 1.35rem; height: 1.35rem; flex: none;
+    accent-color: var(--akcent);
+  }
+  .tresc { flex: 1; overflow-wrap: anywhere; }
+  .tresc small { display: block; color: var(--przygaszony); font-size: .75rem; }
+  .kupione .tresc > span { text-decoration: line-through; color: var(--przygaszony); }
+  .usun {
+    flex: none; width: 2.75rem; height: 2.75rem;
+    border: 0; background: none; color: var(--przygaszony);
+    font-size: 1.4rem; line-height: 1; cursor: pointer; border-radius: .5rem;
+  }
+  .usun:hover { color: var(--blad); }
+  .pusta { text-align: center; color: var(--przygaszony); padding: 2rem 0; }
+  .stopka { margin-top: 1.5rem; font-size: .8rem; color: var(--przygaszony); text-align: center; }
+  .konfiguracja { background: var(--karta); border: 1px solid var(--linia); border-radius: .65rem; padding: 1rem; }
+</style>
+</head>
+<body>
+<div class="opakowanie">
+
+  <!-- brak konfiguracji Firebase -->
+  <section id="konfiguracja" class="konfiguracja ukryte">
+    <h1>Brakuje konfiguracji</h1>
+    <p>W pliku <code>index.html</code> trzeba wkleić dane projektu Firebase w miejsce napisów
+       <code>WKLEJ_...</code> (sekcja <code>firebaseConfig</code>).</p>
+  </section>
+
+  <!-- logowanie -->
+  <section id="logowanie" class="ukryte">
+    <h1>Lista zakupów</h1>
+    <p class="opis">Zaloguj się adresem e-mail. Lista jest wspólna dla Was obojga.</p>
+    <form id="formularz-logowania" novalidate>
+      <input type="email" id="email" placeholder="E-mail" autocomplete="email" inputmode="email" required>
+      <input type="password" id="haslo" placeholder="Hasło (min. 6 znaków)" autocomplete="current-password" required>
+      <div class="rzad">
+        <button type="submit" class="przycisk" id="zaloguj">Zaloguj</button>
+        <button type="button" class="przycisk drugi" id="utworz">Utwórz konto</button>
+      </div>
+      <button type="button" class="link" id="reset">Nie pamiętam hasła</button>
+      <p class="komunikat" id="komunikat-logowania" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <!-- lista -->
+  <section id="aplikacja" class="ukryte">
+    <div class="naglowek">
+      <div>
+        <h1>Lista zakupów</h1>
+        <small id="kto"></small>
+      </div>
+      <button class="przycisk drugi" id="wyloguj" type="button">Wyloguj</button>
+    </div>
+    <form id="dodawanie" autocomplete="off">
+      <input type="text" id="nowa" placeholder="Co dopisać?" maxlength="120" enterkeyhint="done" aria-label="Nowy produkt">
+      <button class="przycisk" type="submit">Dodaj</button>
+    </form>
+    <p class="komunikat" id="komunikat-listy" role="status" aria-live="polite"></p>
+    <ul id="lista"></ul>
+    <p class="stopka">Odznaczone jako kupione znikają z listy po 5 godzinach.</p>
+  </section>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, sendPasswordResetEmail, signOut
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ================================================================
+   TU WKLEJ DANE SWOJEGO PROJEKTU FIREBASE
+   (Firebase → Ustawienia projektu → Twoje aplikacje → Konfiguracja)
+   ================================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBlWVrBYyWhMRLPIKEMZY8GzQr0Z62ipjI",
+  authDomain: "zakupy-3ecaa.firebaseapp.com",
+  projectId: "zakupy-3ecaa",
+  storageBucket: "zakupy-3ecaa.firebasestorage.app",
+  messagingSenderId: "636667381007",
+  appId: "1:636667381007:web:f02531e57f86200a126a7a"
+};
+
+const PIEC_GODZIN = 5 * 60 * 60 * 1000;
+const $ = (id) => document.getElementById(id);
+
+const sekcje = { konfiguracja: $("konfiguracja"), logowanie: $("logowanie"), aplikacja: $("aplikacja") };
+function pokaz(nazwa) {
+  for (const [k, el] of Object.entries(sekcje)) el.classList.toggle("ukryte", k !== nazwa);
+}
+
+if (Object.values(firebaseConfig).some((v) => String(v).startsWith("WKLEJ"))) {
+  pokaz("konfiguracja");
+  throw new Error("Brak konfiguracji Firebase");
+}
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+auth.languageCode = "pl";
+let db;
+try {
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+} catch (e) {
+  db = initializeFirestore(app, {});
+}
+
+/* ---------- komunikaty o błędach ---------- */
+const BLEDY = {
+  "auth/invalid-email": "Nieprawidłowy adres e-mail.",
+  "auth/invalid-credential": "Nieprawidłowy e-mail lub hasło.",
+  "auth/wrong-password": "Nieprawidłowy e-mail lub hasło.",
+  "auth/user-not-found": "Nie ma konta z tym adresem. Użyj przycisku Utwórz konto.",
+  "auth/email-already-in-use": "To konto już istnieje. Użyj przycisku Zaloguj.",
+  "auth/weak-password": "Hasło musi mieć co najmniej 6 znaków.",
+  "auth/missing-password": "Wpisz hasło.",
+  "auth/too-many-requests": "Zbyt wiele prób. Odczekaj chwilę i spróbuj ponownie.",
+  "auth/network-request-failed": "Brak połączenia z internetem.",
+  "auth/unauthorized-domain": "Ta domena nie jest dodana w Firebase (Authentication → Settings → Authorized domains).",
+  "auth/invalid-api-key": "Klucz apiKey w pliku index.html jest nieprawidłowy (sprawdź przepisanie).",
+  "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "Klucz apiKey w pliku index.html jest nieprawidłowy (sprawdź przepisanie).",
+  "permission-denied": "To konto nie ma dostępu do listy."
+};
+const opisBledu = (e) => BLEDY[e && e.code] || "Coś poszło nie tak. Spróbuj ponownie.";
+
+function komunikat(el, tekst, rodzaj) {
+  el.textContent = tekst || "";
+  el.className = "komunikat" + (rodzaj ? " " + rodzaj : "");
+}
+
+/* ---------- logowanie ---------- */
+const poleEmail = $("email"), poleHaslo = $("haslo"), kLog = $("komunikat-logowania");
+
+async function wykonaj(akcja) {
+  komunikat(kLog, "");
+  const email = poleEmail.value.trim();
+  const haslo = poleHaslo.value;
+  if (!email) { komunikat(kLog, "Wpisz adres e-mail.", "blad"); return; }
+  $("zaloguj").disabled = $("utworz").disabled = true;
+  try {
+    await akcja(email, haslo);
+  } catch (e) {
+    komunikat(kLog, opisBledu(e), "blad");
+  } finally {
+    $("zaloguj").disabled = $("utworz").disabled = false;
+  }
+}
+
+$("formularz-logowania").addEventListener("submit", (e) => {
+  e.preventDefault();
+  wykonaj((m, h) => signInWithEmailAndPassword(auth, m, h));
+});
+$("utworz").addEventListener("click", () =>
+  wykonaj((m, h) => createUserWithEmailAndPassword(auth, m, h)));
+$("reset").addEventListener("click", async () => {
+  const email = poleEmail.value.trim();
+  if (!email) { komunikat(kLog, "Wpisz e-mail, na który wysłać link do zmiany hasła.", "blad"); return; }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    komunikat(kLog, "Wysłano wiadomość z linkiem do zmiany hasła (sprawdź też spam).", "ok");
+  } catch (e) {
+    komunikat(kLog, opisBledu(e), "blad");
+  }
+});
+$("wyloguj").addEventListener("click", () => signOut(auth));
+
+/* ---------- lista ---------- */
+const kolekcja = collection(db, "lista");
+const ul = $("lista"), kListy = $("komunikat-listy");
+let pozycje = [];
+let odsubskrybuj = null;
+
+function milisekundy(znacznik) {
+  return znacznik && typeof znacznik.toMillis === "function" ? znacznik.toMillis() : null;
+}
+function wygasla(p) {
+  return p.kupione && p.kupioneO !== null && Date.now() - p.kupioneO > PIEC_GODZIN;
+}
+function zostalo(p) {
+  const ms = PIEC_GODZIN - (Date.now() - p.kupioneO);
+  const min = Math.max(1, Math.ceil(ms / 60000));
+  const h = Math.floor(min / 60), m = min % 60;
+  return h > 0 ? `${h} h ${m} min` : `${m} min`;
+}
+
+function rysuj() {
+  const widoczne = pozycje.filter((p) => !wygasla(p));
+  const doKupienia = widoczne.filter((p) => !p.kupione);
+  const kupione = widoczne.filter((p) => p.kupione).sort((a, b) => (b.kupioneO || 0) - (a.kupioneO || 0));
+  ul.replaceChildren();
+
+  if (!widoczne.length) {
+    const li = document.createElement("li");
+    li.className = "pusta";
+    li.textContent = "Lista jest pusta. Dopisz pierwszy produkt.";
+    ul.append(li);
+    return;
+  }
+  for (const p of [...doKupienia, ...kupione]) {
+    const li = document.createElement("li");
+    li.className = "pozycja" + (p.kupione ? " kupione" : "");
+
+    const label = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = p.kupione;
+    cb.addEventListener("change", () => przelacz(p));
+
+    const tresc = document.createElement("div");
+    tresc.className = "tresc";
+    const nazwa = document.createElement("span");
+    nazwa.textContent = p.tekst;
+    tresc.append(nazwa);
+    const opis = document.createElement("small");
+    opis.textContent = p.kupione && p.kupioneO !== null
+      ? `kupione, zniknie za ${zostalo(p)}`
+      : (p.kto ? `dopisał(a): ${p.kto}` : "");
+    if (opis.textContent) tresc.append(opis);
+
+    label.append(cb, tresc);
+
+    const x = document.createElement("button");
+    x.type = "button";
+    x.className = "usun";
+    x.setAttribute("aria-label", `Usuń: ${p.tekst}`);
+    x.textContent = "×";
+    x.addEventListener("click", () => usun(p));
+
+    li.append(label, x);
+    ul.append(li);
+  }
+}
+
+async function przelacz(p) {
+  komunikat(kListy, "");
+  try {
+    await updateDoc(doc(db, "lista", p.id), {
+      kupione: !p.kupione,
+      kupioneO: !p.kupione ? serverTimestamp() : null
+    });
+  } catch (e) { komunikat(kListy, opisBledu(e), "blad"); }
+}
+async function usun(p) {
+  komunikat(kListy, "");
+  try { await deleteDoc(doc(db, "lista", p.id)); }
+  catch (e) { komunikat(kListy, opisBledu(e), "blad"); }
+}
+
+$("dodawanie").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pole = $("nowa");
+  const tekst = pole.value.trim();
+  if (!tekst || !auth.currentUser) return;
+  pole.value = "";
+  komunikat(kListy, "");
+  try {
+    await addDoc(kolekcja, {
+      tekst,
+      kupione: false,
+      kupioneO: null,
+      utworzono: serverTimestamp(),
+      kto: (auth.currentUser.email || "").split("@")[0]
+    });
+  } catch (err) {
+    pole.value = tekst;
+    komunikat(kListy, opisBledu(err), "blad");
+  }
+});
+
+/* usuwanie po 5 godzinach: ukrywanie od razu przy rysowaniu,
+   a fizyczne kasowanie z bazy robi każda otwarta aplikacja */
+async function sprzataj() {
+  for (const p of pozycje.filter(wygasla)) {
+    try { await deleteDoc(doc(db, "lista", p.id)); } catch (e) { /* ktoś był szybszy */ }
+  }
+}
+setInterval(() => { if (auth.currentUser) { rysuj(); sprzataj(); } }, 60 * 1000);
+
+function start(uzytkownik) {
+  $("kto").textContent = uzytkownik.email;
+  pokaz("aplikacja");
+  const q = query(kolekcja, orderBy("utworzono", "asc"));
+  odsubskrybuj = onSnapshot(q, (snap) => {
+    pozycje = snap.docs.map((d) => {
+      const x = d.data({ serverTimestamps: "estimate" });
+      return {
+        id: d.id,
+        tekst: String(x.tekst || ""),
+        kupione: !!x.kupione,
+        kupioneO: milisekundy(x.kupioneO),
+        kto: x.kto || ""
+      };
+    });
+    komunikat(kListy, "");
+    rysuj();
+    sprzataj();
+  }, (err) => {
+    pozycje = [];
+    rysuj();
+    komunikat(kListy, opisBledu(err), "blad");
+  });
+}
+
+onAuthStateChanged(auth, (uzytkownik) => {
+  if (odsubskrybuj) { odsubskrybuj(); odsubskrybuj = null; }
+  pozycje = [];
+  if (uzytkownik) {
+    start(uzytkownik);
+  } else {
+    poleHaslo.value = "";
+    pokaz("logowanie");
+  }
+});
+</script>
+</body>
+</html>

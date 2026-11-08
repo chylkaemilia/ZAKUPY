@@ -7,6 +7,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Zakupy">
 <meta name="theme-color" content="#2f7d5b">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="ikona-192.png">
 <title>Lista zakupów</title>
 <style>
   :root {
@@ -260,7 +264,7 @@
     <p class="komunikat" id="komunikat-listy" role="status" aria-live="polite"></p>
     <p class="podsumowanie" id="podsumowanie"></p>
     <ul id="lista" role="tabpanel"></ul>
-    <p class="stopka">Odznaczone jako kupione znikają z listy po 5 godzinach.<br>wersja 3 (z przyciskiem przenoszenia)</p>
+    <p class="stopka">Odznaczone jako kupione znikają z listy po 5 godzinach.<br>wersja 4 (aplikacja)</p>
   </section>
 
 </div>
@@ -291,6 +295,13 @@ const KATEGORIE = {
   online:    { nazwa: "Online", domyslna: "📦", podpowiedz: "Co zamówić online?",     pusta: "Nic do zamówienia online. Dopisz pierwszą rzecz." }
 };
 const $ = (id) => document.getElementById(id);
+
+// Pozwala zainstalować stronę jak aplikację i otwierać ją bez internetu
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => { /* bez instalacji też działa */ });
+  });
+}
 
 // Słownik: [wyrażenie na tekście bez polskich znaków, emotka]. Pierwsze dopasowanie wygrywa,
 // więc konkretne wpisy są przed ogólnymi.

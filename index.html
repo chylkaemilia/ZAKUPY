@@ -32,6 +32,10 @@
     --akcent: #2f64c8;
     --akcent-tlo: #e8eefb;
   }
+  #aplikacja[data-kat="plany"] {
+    --akcent: #8a4fd6;
+    --akcent-tlo: #f0e8fb;
+  }
   @media (prefers-color-scheme: dark) {
     :root {
       color-scheme: dark;
@@ -48,6 +52,10 @@
     #aplikacja[data-kat="online"] {
       --akcent: #7ea6f5;
       --akcent-tlo: #1d2740;
+    }
+    #aplikacja[data-kat="plany"] {
+      --akcent: #b794f4;
+      --akcent-tlo: #2a2140;
     }
   }
   *, *::before, *::after { box-sizing: inherit; }
@@ -117,10 +125,10 @@
   .naglowek .link { padding: 0; font-size: .8rem; }
 
   /* zakładki kategorii */
-  .zakladki { display: flex; gap: .5rem; margin-bottom: 1rem; }
+  .zakladki { display: flex; gap: .4rem; margin-bottom: 1rem; }
   .zakladka {
-    flex: 1; display: flex; align-items: center; justify-content: center; gap: .45rem;
-    padding: .7rem .5rem;
+    flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem;
+    padding: .55rem .25rem;
     border: 1px solid var(--linia);
     border-radius: .85rem;
     background: var(--karta);
@@ -133,6 +141,8 @@
     border-color: var(--akcent);
     color: var(--akcent-tekst);
   }
+  .zak-gora { display: flex; align-items: center; gap: .35rem; font-size: 1.15rem; line-height: 1.5rem; }
+  .zak-nazwa { font-size: .8rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .licznik {
     min-width: 1.5rem; padding: 0 .4rem;
     border-radius: 999px;
@@ -150,7 +160,28 @@
     transform: translateY(-50%);
     font-size: 1.35rem; line-height: 1; pointer-events: none;
   }
+  #dodawanie.plany { flex-wrap: wrap; }
+  #dodawanie.plany .pole { flex: 1 1 100%; }
+  .pole-cena { flex: 1; min-width: 0; }
+  .pole-cena input { text-align: right; }
   .podsumowanie { color: var(--przygaszony); font-size: .85rem; margin: .4rem .1rem .8rem; }
+  .suma {
+    background: var(--akcent-tlo); border-radius: .85rem; padding: .7rem 1rem; margin: .5rem 0 .2rem;
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .2rem .8rem;
+  }
+  .suma strong { font-size: 1.35rem; color: var(--akcent); }
+  .suma small { color: var(--przygaszony); font-size: .8rem; flex-basis: 100%; }
+  .cena {
+    flex: none; border: 0; background: var(--akcent-tlo); color: var(--akcent);
+    font-weight: 700; font-size: .85rem; border-radius: .5rem; padding: .35rem .55rem;
+    cursor: pointer; white-space: nowrap; min-height: 2.2rem;
+  }
+  .cena.brak { background: none; color: var(--przygaszony); font-weight: 500; border: 1px dashed var(--linia); }
+  .kupione .cena { text-decoration: line-through; opacity: .6; }
+  .cena-edycja {
+    flex: none; width: 6.5rem; padding: .45rem .5rem !important; text-align: right;
+    font-size: 1rem; border-radius: .5rem !important;
+  }
 
   /* pozycje */
   ul { list-style: none; margin: 0; padding: 0; }
@@ -239,7 +270,6 @@
     <div class="naglowek">
       <div>
         <p class="powitanie" id="powitanie">Cześć! 👋</p>
-        <small>Wspólna lista zakupów</small>
         <button class="link" id="zmien-imie" type="button">zmień imię</button>
       </div>
       <button class="przycisk drugi" id="wyloguj" type="button">Wyloguj</button>
@@ -247,10 +277,16 @@
 
     <div class="zakladki" role="tablist" aria-label="Kategorie">
       <button class="zakladka" role="tab" id="zak-spozywcze" data-kat="spozywcze" aria-selected="true">
-        <span aria-hidden="true">🛒</span> Spożywcze <span class="licznik" id="lic-spozywcze">0</span>
+        <span class="zak-gora"><span aria-hidden="true">🛒</span><span class="licznik" id="lic-spozywcze">0</span></span>
+        <span class="zak-nazwa">Spożywcze</span>
       </button>
       <button class="zakladka" role="tab" id="zak-online" data-kat="online" aria-selected="false">
-        <span aria-hidden="true">📦</span> Online <span class="licznik" id="lic-online">0</span>
+        <span class="zak-gora"><span aria-hidden="true">📦</span><span class="licznik" id="lic-online">0</span></span>
+        <span class="zak-nazwa">Online</span>
+      </button>
+      <button class="zakladka" role="tab" id="zak-plany" data-kat="plany" aria-selected="false">
+        <span class="zak-gora"><span aria-hidden="true">⭐</span><span class="licznik" id="lic-plany">0</span></span>
+        <span class="zak-nazwa">Plany</span>
       </button>
     </div>
 
@@ -259,9 +295,13 @@
         <span id="podglad" aria-hidden="true">🛒</span>
         <input type="text" id="nowa" placeholder="Co dopisać do zakupów?" maxlength="120" enterkeyhint="done" aria-label="Nowy produkt">
       </div>
+      <div class="pole-cena ukryte" id="pole-cena-opakowanie">
+        <input type="text" id="pole-cena" placeholder="Cena w zł" inputmode="decimal" maxlength="12" aria-label="Cena w złotych">
+      </div>
       <button class="przycisk" type="submit">Dodaj</button>
     </form>
     <p class="komunikat" id="komunikat-listy" role="status" aria-live="polite"></p>
+    <div class="suma ukryte" id="suma-plany" aria-live="polite"></div>
     <p class="podsumowanie" id="podsumowanie"></p>
     <ul id="lista" role="tabpanel"></ul>
     <p class="stopka">Odznaczone jako kupione znikają z listy po 5 godzinach.</p>
@@ -292,8 +332,23 @@ const firebaseConfig = {
 const PIEC_GODZIN = 5 * 60 * 60 * 1000;
 const KATEGORIE = {
   spozywcze: { nazwa: "Spożywcze", domyslna: "🛒", podpowiedz: "Co dopisać do zakupów?", pusta: "Lista spożywcza jest pusta. Dopisz pierwszy produkt." },
-  online:    { nazwa: "Online", domyslna: "📦", podpowiedz: "Co zamówić online?",     pusta: "Nic do zamówienia online. Dopisz pierwszą rzecz." }
+  online:    { nazwa: "Online", domyslna: "📦", podpowiedz: "Co zamówić online?",     pusta: "Nic do zamówienia online. Dopisz pierwszą rzecz." },
+  plany:     { nazwa: "Plany", domyslna: "⭐", podpowiedz: "Co planujesz kupić?",     pusta: "Nic nie planujesz kupić. Dopisz pierwszą rzecz i jej cenę." }
 };
+
+/* ---------- ceny (zapisywane w groszach, żeby sumy były dokładne) ---------- */
+// "129,99", "129.99", "1 299,50 zł", "1.299,50" → grosze; pusty tekst → null; błędny → NaN
+function parsujCene(tekst) {
+  let t = String(tekst || "").toLowerCase().replace(/zł|zl|pln/g, "").replace(/\s/g, "");
+  if (!t) return null;
+  if (t.includes(",") && t.includes(".")) t = t.replace(/\./g, "").replace(",", ".");
+  else t = t.replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(t)) return NaN;
+  const gr = Math.round(parseFloat(t) * 100);
+  return gr > 99999999 ? NaN : gr;
+}
+const formatCeny = (gr) => new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(gr / 100);
+const naPole = (gr) => (gr / 100).toFixed(2).replace(".", ",");
 const $ = (id) => document.getElementById(id);
 
 // Pozwala zainstalować stronę jak aplikację i otwierać ją bez internetu
@@ -306,6 +361,9 @@ if ("serviceWorker" in navigator) {
 // Słownik: [wyrażenie na tekście bez polskich znaków, emotka]. Pierwsze dopasowanie wygrywa,
 // więc konkretne wpisy są przed ogólnymi.
 const SLOWNIK = [
+  // --- reguły, które muszą wyprzedzać ogólniejsze ---
+  [/\bfotelik/, "🚗"], [/\bsuszark\w* do wlos|\bprostownic|\blokowk/, "💇"],
+  [/\btoreb|\bportmonetk/, "👜"], [/\bkomod|\bszafk/, "🗄️"], [/\bkask/, "⛑️"],
   // --- konkretne wyjątki ---
   [/\bproszek do piecz/, "🧁"],
   [/\bbateri|\bakumulator|\bpaluszki aa|\bpaluszki aaa/, "🔋"],
@@ -344,7 +402,7 @@ const SLOWNIK = [
   [/\bbulk|\bbagiet/, "🥖"], [/\bchleb|\btost/, "🍞"], [/\brogal|\bkrois/, "🥐"], [/\bpaczk/, "🍩"],
   [/\btort/, "🎂"], [/\bciast|\bbabk|\bsernik|\bszarlotk/, "🍰"],
   [/\bczekolad|\bbatonik/, "🍫"], [/\bcukierk|\bzelk|\bzelki|\bzelek|\bcukier\b|\bcukru\b/, "🍬"],
-  [/\blody\b|\blodow|\bgalaretk/, "🍦"], [/\blod\b|\blodu\b/, "🧊"],
+  [/\blody\b|\blodow\b|\bgalaretk/, "🍦"], [/\blod\b|\blodu\b/, "🧊"],
   // --- sypkie, przetwory, napoje ---
   [/\bmakaron|\bspaghetti|\bpenne|\bwermisz|\bkluski/, "🍝"],
   [/\bryz/, "🍚"], [/\bkasz|\bmak(a|i|e)\b|\bmaka\b/, "🌾"],
@@ -378,6 +436,9 @@ const SLOWNIK = [
   [/\bsluchawk|\bglosnik/, "🎧"], [/\btelefon|\bsmartfon|\betui/, "📱"],
   [/\blaptop|\bkomputer/, "💻"], [/\bmysz\b|\bmyszk/, "🖱️"], [/\bklawiatur/, "⌨️"],
   [/\btelewizor|\btv\b/, "📺"], [/\bdrukark|\btusz\b|\btoner/, "🖨️"],
+  [/\bnawilzacz|\boczyszczacz|\bdyfuzor/, "💨"], [/\bodkurzacz|\bmop\b|\bmopa\b/, "🧹"],
+  [/\bpralk|\bsuszark/, "🧺"], [/\blodowk|\bzamrazark/, "🧊"], [/\bekspres|\bczajnik/, "☕"],
+  [/\bgrzejnik|\bpiecyk|\bwentylator|\bklimatyzator/, "🌡️"], [/\bglosnik|\bsoundbar/, "🔊"],
   [/\bksiazk|\bpodrecznik|\bkomiks/, "📚"],
   [/\bbuty\b|\bbutow|\btrampk|\bsandal|\bklapk|\bkozak|\bbuciki/, "👟"],
   [/\bkurtk|\bplaszcz|\bkamizelk/, "🧥"], [/\bspodni|\bjeans|\bdzins/, "👖"],
@@ -394,6 +455,29 @@ const SLOWNIK = [
   [/\brecznik/, "🛁"], [/\bzaslon|\bfirank|\bdywan|\bobraz|\bramk/, "🏠"],
   [/\brower/, "🚲"], [/\bopon|\bsamochod/, "🚗"], [/\bpilk|\bhantl|\bsport/, "⚽"],
   [/\broslin|\bdonicz|\bziemia|\bnasion/, "🌱"], [/\bbilet|\bsubskrypcj/, "🎫"],
+  // --- plany: elektronika, dom, podróże, sport ---
+  [/\bwozek|\bwozki|\bgondol/, "👶"],
+  [/\biphone|\bsamsung|\bxiaomi|\bpixel\b|\btablet(?!k)|\bipad/, "📱"],
+  [/\bmonitor|\bekran/, "🖥️"], [/\bprojektor/, "📽️"],
+  [/\bkonsol|\bplaystation|\bps[45]\b|\bxbox|\bnintendo|\bkontroler|\bgamepad/, "🎮"],
+  [/\baparat\w* (foto|cyfrow)|\bkamer|\bgopro|\bfotograf|\baparat\b/, "📷"],
+  [/\bdron/, "🚁"], [/\bsmartwatch|\bsmartband|\bgarmin/, "⌚"],
+  [/\brouter|\bwifi|\bwi-fi/, "📶"], [/\bpendrive|\bdysk(i|u|iem)?\b|\bkarta pamieci/, "💾"],
+  [/\bczytnik|\bkindle/, "📖"],
+  [/\bhulajnog/, "🛴"], [/\bskuter/, "🛵"], [/\bmotocykl|\bmotor\b/, "🏍️"],
+  [/\bnarty|\bnart\b|\bsnowboard/, "🎿"], [/\blyzw|\brolki/, "⛸️"],
+  [/\bsilowni|\bkarnet|\bbieznia|\browerek treningow|\brower stacjonarn/, "🏋️"],
+  [/\bwakacj|\burlop|\bwycieczk|\bpodroz|\bwyjazd|\bkolonie/, "🏖️"],
+  [/\bsamolot|\blot\b|\bloty\b|\blotnisk|\blotnicz/, "✈️"], [/\bpociag/, "🚆"], [/\bhotel|\bnocleg|\bapartament/, "🏨"],
+  [/\blozk/, "🛏️"], [/\blustr/, "🖼️"],
+  [/\bblender|\bmikser|\brobot kuchenn|\bthermomix|\bmulticooker/, "🥣"],
+  [/\bgrill/, "🍖"], [/\btoster/, "🍞"], [/\bkosiark|\bwez ogrodow|\bnozyce do zywoplot/, "🌱"],
+  [/\bobraczk|\bpierscion|\bbizuteri|\bkolczyk|\bnaszyjnik|\bbransolet/, "💍"],
+  [/\bgarnitur|\bmarynark/, "🤵"], [/\bslub|\bwesel/, "💒"],
+  [/\bkurs|\bszkolen|\bstudia/, "🎓"],
+  [/\bremont|\bwykonczen/, "🔨"], [/\bdrzwi/, "🚪"], [/\bplytk|\bpodlog/, "🧱"],
+  [/\bprysznic|\bkabin/, "🚿"], [/\bwann/, "🛁"], [/\bumywalk|\bzlew|\bkran\b/, "🚰"],
+  [/\bchoink|\bswiateczn|\bbombk/, "🎄"], [/\badidasy|\bsneaker|\bnike\b|\badidas\b|\bnewbalance|\bpuma\b/, "👟"],
   [/\bpapier\b/, "📄"],
 ];
 
@@ -407,7 +491,7 @@ function emotka(tekst, kategoria) {
   if (t.trim()) {
     for (const [re, em] of SLOWNIK) if (re.test(t)) return em;
   }
-  return kategoria === "online" ? "📦" : "🛒";
+  return kategoria === "online" ? "📦" : (kategoria === "plany" ? "⭐" : "🛒");
 }
 
 
@@ -523,7 +607,9 @@ function zostalo(p) {
   return h > 0 ? `${h} h ${m} min` : `${m} min`;
 }
 
+let edytujeCene = false;
 function rysuj() {
+  if (edytujeCene) return;                 // nie przerywaj wpisywania ceny
   const widoczne = pozycje.filter((p) => !wygasla(p));
   for (const k of Object.keys(KATEGORIE)) {
     $("lic-" + k).textContent = widoczne.filter((p) => p.kategoria === k && !p.kupione).length;
@@ -535,6 +621,25 @@ function rysuj() {
   $("podsumowanie").textContent = doKupienia.length
     ? `Zostało do ${aktywna === "online" ? "zamówienia" : "kupienia"}: ${doKupienia.length}`
     : (tutaj.length ? "Wszystko załatwione! 🎉" : "");
+
+  const sumaEl = $("suma-plany");
+  sumaEl.classList.toggle("ukryte", aktywna !== "plany" || doKupienia.length === 0);
+  if (aktywna === "plany" && doKupienia.length) {
+    const zCena = doKupienia.filter((p) => p.cenaGr !== null);
+    const razem = zCena.reduce((suma, p) => suma + p.cenaGr, 0);
+    const bez = doKupienia.length - zCena.length;
+    sumaEl.replaceChildren();
+    const et = document.createElement("span");
+    et.textContent = "Suma";
+    const kw = document.createElement("strong");
+    kw.textContent = formatCeny(razem);
+    sumaEl.append(et, kw);
+    if (bez > 0) {
+      const m = document.createElement("small");
+      m.textContent = `${bez} ${bez === 1 ? "pozycja jest" : "pozycje są"} bez ceny i nie wlicza${bez === 1 ? "" : "ją"} się do sumy.`;
+      sumaEl.append(m);
+    }
+  }
 
   ul.replaceChildren();
   if (!tutaj.length) {
@@ -583,16 +688,26 @@ function rysuj() {
     x.textContent = "×";
     x.addEventListener("click", () => usun(p));
 
-    const inna = aktywna === "online" ? "spozywcze" : "online";
-    const przenies = document.createElement("button");
-    przenies.type = "button";
-    przenies.className = "przenies";
-    przenies.title = `Przenieś do: ${KATEGORIE[inna].nazwa}`;
-    przenies.setAttribute("aria-label", `Przenieś „${p.tekst}” do: ${KATEGORIE[inna].nazwa}`);
-    przenies.textContent = `→ ${KATEGORIE[inna].domyslna}`;
-    przenies.addEventListener("click", () => przenies_do(p, inna));
-
-    li.append(label, przenies, x);
+    if (aktywna === "plany") {
+      // w Planach jest cena (z możliwością poprawienia) i nie ma przenoszenia do innych zakładek
+      const cena = document.createElement("button");
+      cena.type = "button";
+      cena.className = "cena" + (p.cenaGr === null ? " brak" : "");
+      cena.textContent = p.cenaGr === null ? "+ cena" : formatCeny(p.cenaGr);
+      cena.setAttribute("aria-label", p.cenaGr === null ? `Dodaj cenę: ${p.tekst}` : `Zmień cenę ${formatCeny(p.cenaGr)}: ${p.tekst}`);
+      cena.addEventListener("click", () => edytujCene(p, cena));
+      li.append(label, cena, x);
+    } else {
+      const inna = aktywna === "online" ? "spozywcze" : "online";
+      const przenies = document.createElement("button");
+      przenies.type = "button";
+      przenies.className = "przenies";
+      przenies.title = `Przenieś do: ${KATEGORIE[inna].nazwa}`;
+      przenies.setAttribute("aria-label", `Przenieś „${p.tekst}” do: ${KATEGORIE[inna].nazwa}`);
+      przenies.textContent = `→ ${KATEGORIE[inna].domyslna}`;
+      przenies.addEventListener("click", () => przenies_do(p, inna));
+      li.append(label, przenies, x);
+    }
     ul.append(li);
   }
 }
@@ -604,6 +719,9 @@ function ustawZakladke(k) {
     $("zak-" + nazwa).setAttribute("aria-selected", String(nazwa === k));
   }
   $("nowa").placeholder = KATEGORIE[k].podpowiedz;
+  $("pole-cena-opakowanie").classList.toggle("ukryte", k !== "plany");
+  $("dodawanie").classList.toggle("plany", k === "plany");
+  komunikat(kListy, "");
   odswiezPodglad();
   rysuj();
 }
@@ -630,6 +748,36 @@ async function przenies_do(p, kategoria) {
     komunikat(kListy, `Przeniesiono „${p.tekst}” do: ${KATEGORIE[kategoria].nazwa}`, "ok");
   } catch (e) { komunikat(kListy, opisBledu(e), "blad"); }
 }
+function edytujCene(p, przycisk) {
+  edytujeCene = true;
+  const pole = document.createElement("input");
+  pole.type = "text";
+  pole.inputMode = "decimal";
+  pole.className = "cena-edycja";
+  pole.placeholder = "zł";
+  pole.maxLength = 12;
+  pole.setAttribute("aria-label", `Cena: ${p.tekst}`);
+  pole.value = p.cenaGr === null ? "" : naPole(p.cenaGr);
+  let zakonczone = false;
+  const zakoncz = () => { zakonczone = true; edytujeCene = false; };
+  pole.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); pole.blur(); }
+    else if (e.key === "Escape") { zakoncz(); rysuj(); }
+  });
+  pole.addEventListener("blur", async () => {
+    if (zakonczone) return;
+    const gr = parsujCene(pole.value);
+    zakoncz();
+    if (Number.isNaN(gr)) { komunikat(kListy, "Wpisz cenę liczbą, np. 129,99.", "blad"); rysuj(); return; }
+    if (gr === p.cenaGr) { rysuj(); return; }
+    komunikat(kListy, "");
+    try { await updateDoc(doc(db, "lista", p.id), { cenaGr: gr }); }
+    catch (e) { komunikat(kListy, opisBledu(e), "blad"); rysuj(); }
+  });
+  przycisk.replaceWith(pole);
+  pole.focus();
+  pole.select();
+}
 async function usun(p) {
   komunikat(kListy, "");
   try { await deleteDoc(doc(db, "lista", p.id)); }
@@ -641,13 +789,20 @@ $("dodawanie").addEventListener("submit", async (e) => {
   const pole = $("nowa");
   const tekst = pole.value.trim();
   if (!tekst || !auth.currentUser) return;
+  let cenaGr = null;
+  if (aktywna === "plany") {
+    cenaGr = parsujCene($("pole-cena").value);
+    if (Number.isNaN(cenaGr)) { komunikat(kListy, "Wpisz cenę liczbą, np. 129,99 (albo zostaw puste).", "blad"); return; }
+  }
   pole.value = "";
+  $("pole-cena").value = "";
   odswiezPodglad();
   komunikat(kListy, "");
   try {
     await addDoc(kolekcja, {
       tekst,
       kategoria: aktywna,
+      ...(aktywna === "plany" ? { cenaGr } : {}),
       kupione: false,
       kupioneO: null,
       utworzono: serverTimestamp(),
@@ -655,6 +810,7 @@ $("dodawanie").addEventListener("submit", async (e) => {
     });
   } catch (err) {
     pole.value = tekst;
+    if (cenaGr !== null) $("pole-cena").value = naPole(cenaGr);
     odswiezPodglad();
     komunikat(kListy, opisBledu(err), "blad");
   }
@@ -679,7 +835,8 @@ function start(uzytkownik) {
       return {
         id: d.id,
         tekst: String(x.tekst || ""),
-        kategoria: x.kategoria === "online" ? "online" : "spozywcze",
+        kategoria: x.kategoria === "online" || x.kategoria === "plany" ? x.kategoria : "spozywcze",
+        cenaGr: Number.isInteger(x.cenaGr) ? x.cenaGr : null,
         kupione: !!x.kupione,
         kupioneO: milisekundy(x.kupioneO),
         kto: x.kto || ""

@@ -223,6 +223,54 @@
   .przenies:hover, .przenies:focus-visible { background: var(--akcent-tlo); color: var(--akcent); }
   .pusta { text-align: center; color: var(--przygaszony); padding: 2rem 0; }
   .pusta .duza-emotka { display: block; }
+  .przycisk.maly { padding: .5rem .7rem; font-size: .8rem; white-space: nowrap; }
+  .kot-wiersz {
+    display: flex; align-items: center; gap: .7rem;
+    background: var(--karta); border: 1px solid var(--linia); border-radius: 1rem;
+    padding: .4rem .7rem .4rem .5rem; margin: .2rem 0 1rem;
+  }
+  .kot-przycisk { flex: none; width: 3.3rem; padding: 0; border: 0; background: none; cursor: pointer; border-radius: .8rem; position: relative; }
+  .kot-przycisk svg { width: 100%; height: auto; display: block; }
+  .kot-przycisk.gotowa svg { animation: kot-skacz 1.3s ease-in-out infinite; transform-origin: 50% 90%; }
+  .kot-przycisk.gotowa::after { content: "✨"; position: absolute; right: -.3rem; top: -.3rem; font-size: 1rem; }
+  .kot-hint { flex: 1; min-width: 0; margin: 0; font-size: .85rem; color: var(--przygaszony); }
+  @keyframes kot-skacz { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-5px) rotate(-5deg); } 60% { transform: translateY(0) rotate(5deg); } }
+
+  .niespodzianka {
+    position: fixed; inset: 0; z-index: 100; background: rgba(10, 14, 25, .62);
+    display: flex; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .niespodzianka-karta {
+    position: relative; overflow: hidden; width: 100%; max-width: 22rem; text-align: center;
+    background: var(--karta); border-radius: 1.3rem; padding: 1.2rem 1.2rem 1.3rem;
+  }
+  .n-kot { display: block; width: 6.5rem; margin: 0 auto; }
+  .n-kot svg { width: 100%; height: auto; display: block; }
+  .n-produkt { font-size: 5rem; line-height: 1.1; animation: n-taniec 1.3s ease-in-out infinite; }
+  .n-etykieta { margin: .4rem 0 0; color: var(--przygaszony); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+  .niespodzianka-karta h2 { margin: .2rem 0 .3rem; font-size: 1.6rem; overflow-wrap: anywhere; }
+  .n-opis { margin: 0 0 .3rem; }
+  .n-dalej { margin: 0 0 1rem; color: var(--przygaszony); font-size: .85rem; min-height: 1.2rem; }
+  .konfetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .konfetti span { position: absolute; top: -16px; width: 8px; height: 14px; border-radius: 2px; animation: n-spada 3s linear infinite; }
+  @keyframes n-taniec { 0%, 100% { transform: translateY(0) rotate(-6deg) scale(1); } 25% { transform: translateY(-14px) rotate(6deg) scale(1.08); } 50% { transform: translateY(0) rotate(-6deg) scale(1); } 75% { transform: translateY(-8px) rotate(6deg) scale(1.04); } }
+  @keyframes n-spada { to { transform: translateY(30rem) rotate(560deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .kot-przycisk.gotowa svg, .n-produkt, .konfetti span { animation: none; }
+    .konfetti { display: none; }
+  }
+
+  .stat-wiersz { display: grid; grid-template-columns: 1fr auto; gap: .15rem .6rem; align-items: center; margin: 0 0 .7rem; }
+  .stat-wiersz .nazwa { overflow-wrap: anywhere; }
+  .stat-wiersz .liczba { font-weight: 700; color: var(--akcent); white-space: nowrap; }
+  .stat-wiersz .slupek { grid-column: 1 / -1; height: .55rem; background: var(--linia); border-radius: 999px; overflow: hidden; }
+  .stat-wiersz .slupek > span { display: block; height: 100%; background: var(--akcent); border-radius: 999px; }
+  .stat-lista { list-style: none; margin: 0; padding: 0; }
+  .grupa {
+    list-style: none; margin: 1rem .2rem .4rem; font-size: .78rem; font-weight: 700;
+    letter-spacing: .03em; text-transform: uppercase; color: var(--przygaszony);
+  }
+  .grupa:first-child { margin-top: .2rem; }
   .stopka { margin-top: 1.5rem; font-size: .8rem; color: var(--przygaszony); text-align: center; }
   .konfiguracja { background: var(--karta); border: 1px solid var(--linia); border-radius: .65rem; padding: 1rem; }
 </style>
@@ -275,6 +323,12 @@
       <button class="przycisk drugi" id="wyloguj" type="button">Wyloguj</button>
     </div>
 
+    <div class="kot-wiersz">
+      <button type="button" class="kot-przycisk" id="kot-przycisk" aria-describedby="kot-hint" title="Kot z niespodzianką"><span id="kot-ikona"></span></button>
+      <p class="kot-hint" id="kot-hint"></p>
+      <button type="button" class="przycisk drugi maly" id="otworz-statystyki">📊 Statystyki</button>
+    </div>
+
     <div class="zakladki" role="tablist" aria-label="Kategorie">
       <button class="zakladka" role="tab" id="zak-spozywcze" data-kat="spozywcze" aria-selected="true">
         <span class="zak-gora"><span aria-hidden="true">🛒</span><span class="licznik" id="lic-spozywcze">0</span></span>
@@ -304,9 +358,35 @@
     <div class="suma ukryte" id="suma-plany" aria-live="polite"></div>
     <p class="podsumowanie" id="podsumowanie"></p>
     <ul id="lista" role="tabpanel"></ul>
-    <p class="stopka">Odznaczone jako kupione znikają z listy po 5 godzinach.</p>
+    <p class="stopka">Odznaczone jako kupione znikają z listy po 30 minutach.</p>
   </section>
 
+  <!-- statystyki -->
+  <section id="statystyki" class="ukryte">
+    <button class="link" id="wroc-ze-statystyk" type="button">← Wróć do listy</button>
+    <h1>📊 Statystyki</h1>
+    <p class="opis" id="stat-opis"></p>
+    <h2>Kategorie</h2>
+    <div id="stat-kategorie"></div>
+    <h2>Najczęściej kupowane</h2>
+    <ol id="stat-produkty" class="stat-lista"></ol>
+    <p class="stopka">Liczą się produkty ze Spożywczych oznaczone jako kupione.</p>
+  </section>
+
+</div>
+
+<!-- niespodzianka od kota -->
+<div id="niespodzianka" class="niespodzianka ukryte" role="dialog" aria-modal="true" aria-labelledby="n-tytul">
+  <div class="niespodzianka-karta">
+    <div class="konfetti" id="konfetti" aria-hidden="true"></div>
+    <span class="n-kot" id="n-kot"></span>
+    <div class="n-produkt" id="n-produkt" aria-hidden="true"></div>
+    <p class="n-etykieta">Najczęściej kupowany produkt</p>
+    <h2 id="n-tytul"></h2>
+    <p class="n-opis" id="n-opis"></p>
+    <p class="n-dalej" id="n-dalej"></p>
+    <button type="button" class="przycisk" id="n-zamknij">Super!</button>
+  </div>
 </div>
 
 <script type="module">
@@ -317,7 +397,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-  collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp
+  collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp,
+  writeBatch, increment
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -329,7 +410,7 @@ const firebaseConfig = {
   appId: "1:636667381007:web:f02531e57f86200a126a7a"
 };
 
-const PIEC_GODZIN = 5 * 60 * 60 * 1000;
+const CZAS_ZNIKANIA = 30 * 60 * 1000;      // kupione znikają z listy po 30 minutach
 const KATEGORIE = {
   spozywcze: { nazwa: "Spożywcze", domyslna: "🛒", podpowiedz: "Co dopisać do zakupów?", pusta: "Lista spożywcza jest pusta. Dopisz pierwszy produkt." },
   online:    { nazwa: "Online", domyslna: "📦", podpowiedz: "Co zamówić online?",     pusta: "Nic do zamówienia online. Dopisz pierwszą rzecz." },
@@ -495,9 +576,125 @@ function emotka(tekst, kategoria) {
 }
 
 
+// Narysowany kot (własna ilustracja). Nastroje: ciekawy, szczesliwy, smutny, spiacy, swietuje.
+const KOT_NASTROJE = ["ciekawy", "szczesliwy", "smutny", "spiacy", "swietuje"];
+function kotSvg(nastroj) {
+  const C = { futro: "#f2a33a", pasek: "#d9822b", pysk: "#fff1da", ucho: "#f4a6b4", nos: "#e0768c", kontur: "#3b2a1e", wasy: "#a39384", policzek: "#f58fa0" };
+  const linia = (d, szer, kolor) => `<path d="${d}" fill="none" stroke="${kolor || C.kontur}" stroke-width="${szer || 3.2}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const oko = (x) => `<ellipse cx="${x}" cy="62" rx="6" ry="7.5" fill="${C.kontur}"/><circle cx="${x + 2}" cy="59" r="2.2" fill="#fff"/><circle cx="${x - 2}" cy="65" r="1.1" fill="#fff"/>`;
+
+  let oczy = "", usta = "", dodatki = "", gora = "";
+  switch (nastroj) {
+    case "szczesliwy":
+      oczy = linia("M33 64 Q41 53 49 64") + linia("M71 64 Q79 53 87 64");
+      usta = `<path d="M51 82 Q60 95 69 82 Z" fill="#7a2e3a" stroke="${C.kontur}" stroke-width="2.4" stroke-linejoin="round"/><path d="M55 89 Q60 93 65 89 Q60 86 55 89 Z" fill="#f07c8e"/>`;
+      dodatki = `<circle cx="30" cy="76" r="6" fill="${C.policzek}" opacity=".55"/><circle cx="90" cy="76" r="6" fill="${C.policzek}" opacity=".55"/>`;
+      break;
+    case "smutny":
+      oczy = oko(41) + oko(79) + linia("M32 57 L49 50") + linia("M88 57 L71 50");
+      usta = linia("M52 90 Q60 81 68 90");
+      dodatki = `<path d="M85 70 Q89 77 85 81 Q81 77 85 70 Z" fill="#7fc4f5" opacity=".9"/>`;
+      break;
+    case "spiacy":
+      oczy = linia("M33 62 Q41 69 49 62") + linia("M71 62 Q79 69 87 62");
+      usta = `<ellipse cx="60" cy="87" rx="3.4" ry="2.6" fill="#7a2e3a"/>`;
+      dodatki = `<text x="92" y="30" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#6d82c9">z</text><text x="101" y="16" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#6d82c9">z</text>`;
+      break;
+    case "swietuje":
+      oczy = linia("M33 64 Q41 53 49 64") + linia("M71 64 Q79 53 87 64");
+      usta = `<path d="M50 81 Q60 98 70 81 Z" fill="#7a2e3a" stroke="${C.kontur}" stroke-width="2.4" stroke-linejoin="round"/><path d="M54 90 Q60 95 66 90 Q60 86 54 90 Z" fill="#f07c8e"/>`;
+      dodatki = `<circle cx="30" cy="76" r="6" fill="${C.policzek}" opacity=".55"/><circle cx="90" cy="76" r="6" fill="${C.policzek}" opacity=".55"/>`
+        + `<rect x="6" y="14" width="5" height="5" fill="#35c28a" transform="rotate(25 8 16)"/><rect x="108" y="24" width="5" height="5" fill="#ff5d73" transform="rotate(-20 110 26)"/>`
+        + `<circle cx="14" cy="38" r="2.6" fill="#ffd23f"/><circle cx="108" cy="8" r="2.6" fill="#3a9bff"/><rect x="100" y="48" width="4" height="4" fill="#ffd23f" transform="rotate(35 102 50)"/><rect x="16" y="2" width="4" height="4" fill="#ff5d73" transform="rotate(-30 18 4)"/>`;
+      gora = `<polygon points="47,30 73,30 60,-9" fill="#7c5cff"/><path d="M52 21 L68 21 M55 11 L65 11" stroke="#ffd23f" stroke-width="2.6" stroke-linecap="round"/><circle cx="60" cy="-9" r="4.2" fill="#ffd23f"/>`;
+      break;
+    default: // ciekawy
+      oczy = oko(41) + oko(79);
+      usta = linia("M60 77 L60 82") + linia("M60 82 Q54 88 48.5 83.5") + linia("M60 82 Q66 88 71.5 83.5");
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -14 120 134" role="img" aria-hidden="true" focusable="false">`
+    + `<polygon points="21,46 27,8 58,31" fill="${C.futro}" stroke="${C.pasek}" stroke-width="2" stroke-linejoin="round"/>`
+    + `<polygon points="99,46 93,8 62,31" fill="${C.futro}" stroke="${C.pasek}" stroke-width="2" stroke-linejoin="round"/>`
+    + `<polygon points="29,37 32,18 47,30" fill="${C.ucho}"/><polygon points="91,37 88,18 73,30" fill="${C.ucho}"/>`
+    + `<ellipse cx="60" cy="68" rx="47" ry="41" fill="${C.futro}"/>`
+    + `<path d="M60 28 L60 41 M49 31 L51 41 M71 31 L69 41" stroke="${C.pasek}" stroke-width="4" stroke-linecap="round" fill="none"/>`
+    + `<ellipse cx="60" cy="81" rx="19" ry="14" fill="${C.pysk}"/>`
+    + gora + oczy
+    + `<polygon points="54.5,72 65.5,72 60,78" fill="${C.nos}" stroke="${C.nos}" stroke-width="1.6" stroke-linejoin="round"/>`
+    + usta
+    + `<path d="M14 71 L35 75 M13 82 L35 80 M106 71 L85 75 M107 82 L85 80" stroke="${C.wasy}" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>`
+    + dodatki
+    + `</svg>`;
+}
+
+
+/* ---------- kategorie produktów (kolejność układania listy spożywczej) ---------- */
+const GRUPY = [
+  { id: "wo", nazwa: "Warzywa i owoce", emotka: "🥕" },
+  { id: "nabial", nazwa: "Nabiał", emotka: "🥛" },
+  { id: "mieso", nazwa: "Mięso i ryby", emotka: "🥩" },
+  { id: "inne", nazwa: "Inne", emotka: "🛒" },
+  { id: "napoje", nazwa: "Napoje", emotka: "🥤" },
+];
+// Sprawdzane po kolei: pierwszy pasujący wzorzec wygrywa (np. "sok pomarańczowy" to napój, a nie owoc)
+const REGULY_GRUP = [
+  ["napoje", /\bsok(i|u|iem)?\b|\bnektar|\bnapoj|\bwod(a|y|e|ie)\b|\bmineraln|\bpiw(o|a|em|ie)\b|\bpiwk|\bwin(o|a|em|ie)\b|\bprosecco|\bszampan|\bwodk|\bwhisk|\bcola|\bcoca|\bpepsi|\bfanta|\bsprite|\blemoniad|\bkaw(a|y|e|ie)\b|\bespresso|\bkapsulk\w* do kaw|\bherbat|\bkompot|\bizotonik|\benergetyk|\bcydr|\blikier|\bgin\b|\brum\b/],
+  ["nabial", /\bmlek|\bmleczk|\bsmietan|\bsmietank|\bjogurt|\bkefir|\bmaslank|\bser(a|em|y|ow|ek|ki|ku|ze)?\b|\bserek|\btwarog|\bmozzarell|\bparmezan|\bfeta\b|\bgouda|\bcheddar|\bricott|\bmascarpone|\bskyr|\bmaslo\b|\bmasla\b|\bmaslem|\bmargaryn|\bjaj/],
+  ["mieso", /\bkurczak|\bindyk|\bskrzydelk|\bkielbas|\bparowk|\bszynk|\bboczek|\bbekon|\bsalami|\bwedlin|\bmies(o|a|em|ie|ny|ne)\b|\bwolowin|\bwieprzow|\bschab|\bkarkowk|\bkotlet|\bsteki?\b|\bryb|\blosos|\btunczyk|\bdorsz|\bsledz|\bmakrel|\bpstrag|\bkrewetk|\bpasztet|\bkabanos|\bpolendwic|\bzeberk|\bpiers\b|\bpiersi|\budk|\bwatrob|\bflaki|\bburger|\bhot ?dog/],
+  ["wo", /\bjabl|\bbanan|\bgrusz|\bpomarancz|\bmandarynk|\bklementyn|\bcytryn|\blimonk|\btruskawk|\bmalin|\bjagod|\bborowk|\bwinogron|\barbuz|\bbrzoskwin|\bmorel|\bnektaryn|\bwisni|\bczeresni|\bananas|\bkiwi|\bawokado|\bmelon|\bkokos|\bpomidor|\bziemniak|\bkartofl|\bmarchew|\bogor|\bcebul|\bczosn|\bpapryk|\bsalat|\brukol|\bszpinak|\bkapust|\bbrokul|\bkalafior|\bkukurydz|\bpieczark|\bgrzyb|\bdyni|\bfasol|\bgroch|\bsoczewic|\bciecierzyc|\bburak|\bseler|\bpor\b|\bpietruszk|\bkoper\b|\bszczypiork|\bnatk|\bbazyli|\bcukini|\bpatison|\bbaklazan|\brzodkiew|\bkalarepk|\bmango|\bgranat|\bfigi\b|\bsliwk|\bpapaj|\bowoc|\bwarzyw|\bzurawin|\bporzeczk|\bagrest|\bimbir|\bchili/],
+];
+function grupaProduktu(tekst) {
+  const t = bezOgonkow(tekst);
+  for (const [grupa, wzor] of REGULY_GRUP) if (wzor.test(t)) return grupa;
+  return "inne";
+}
+
+/* ---------- statystyki kupowania ---------- */
+// Liczniki trzymamy w jednym dokumencie (lista/_statystyki), więc zostają także wtedy,
+// gdy kupione pozycje znikną z listy. Dokument nie ma pola "utworzono", więc nie trafia na listę.
+let statystyki = null;
+const refStat = () => doc(db, "lista", "_statystyki");
+function dzienLokalny(d = new Date()) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+const JEDNOSTKI = "kg|g|dag|ml|l|szt\\.?|opak\\.?|x";
+function nazwaDoStatystyk(tekst) {
+  const t = String(tekst).replace(new RegExp(`\\d+([.,]\\d+)?\\s*(${JEDNOSTKI})?`, "gi"), " ")
+    .replace(/[%+*()~]/g, " ").replace(/\s+/g, " ").replace(/^[\s,.-]+|[\s,.-]+$/g, "");
+  return wielka(t || String(tekst).trim());
+}
+function kluczProduktu(tekst) {
+  const t = bezOgonkow(tekst)
+    .replace(new RegExp(`\\d+([.,]\\d+)?\\s*(${JEDNOSTKI})?`, "g"), " ")
+    .replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  return t.replace(/ /g, "_").slice(0, 40) || "inne";
+}
+function przyrostStatystyk(p, krok) {
+  const grupa = grupaProduktu(p.tekst);
+  const dane = {
+    razem: increment(krok),
+    kategorie: { [grupa]: increment(krok) },
+    produkty: { [kluczProduktu(p.tekst)]: { n: increment(krok), nazwa: nazwaDoStatystyk(p.tekst), kat: grupa, ost: dzienLokalny() } },
+  };
+  if (!statystyki || !statystyki.od) dane.od = dzienLokalny();
+  return dane;
+}
+function listaProduktow() {
+  return Object.entries((statystyki && statystyki.produkty) || {})
+    .map(([klucz, v]) => ({ klucz, n: Math.max(0, Number(v && v.n) || 0), nazwa: (v && v.nazwa) || klucz, kat: (v && v.kat) || "inne", ost: (v && v.ost) || "" }))
+    .filter((x) => x.n > 0)
+    .sort((a, b) => b.n - a.n || (a.ost < b.ost ? 1 : a.ost > b.ost ? -1 : 0) || a.nazwa.localeCompare(b.nazwa, "pl"));
+}
+function liczbyKategorii() {
+  const k = (statystyki && statystyki.kategorie) || {};
+  return GRUPY.map((g) => ({ ...g, n: Math.max(0, Number(k[g.id]) || 0) }));
+}
+const odmianaRazy = (n) => n === 1 ? "raz" : "razy";
+
 const sekcje = {
   konfiguracja: $("konfiguracja"), logowanie: $("logowanie"),
-  imie: $("imie"), aplikacja: $("aplikacja")
+  imie: $("imie"), aplikacja: $("aplikacja"), statystyki: $("statystyki")
 };
 function pokaz(nazwa) {
   for (const [k, el] of Object.entries(sekcje)) el.classList.toggle("ukryte", k !== nazwa);
@@ -596,16 +793,134 @@ const kolekcja = collection(db, "lista");
 const ul = $("lista"), kListy = $("komunikat-listy");
 let pozycje = [];
 let odsubskrybuj = null;
+let odsubStat = null;
 let aktywna = "spozywcze";
 
 const milisekundy = (z) => z && typeof z.toMillis === "function" ? z.toMillis() : null;
-const wygasla = (p) => p.kupione && p.kupioneO !== null && Date.now() - p.kupioneO > PIEC_GODZIN;
+const wygasla = (p) => p.kupione && p.kupioneO !== null && Date.now() - p.kupioneO > CZAS_ZNIKANIA;
 function zostalo(p) {
-  const ms = PIEC_GODZIN - (Date.now() - p.kupioneO);
+  const ms = CZAS_ZNIKANIA - (Date.now() - p.kupioneO);
   const min = Math.max(1, Math.ceil(ms / 60000));
   const h = Math.floor(min / 60), m = min % 60;
   return h > 0 ? `${h} h ${m} min` : `${m} min`;
 }
+
+/* ---------- kot z niespodzianką ---------- */
+const DOBA = 24 * 60 * 60 * 1000;
+let pamiecNiespodzianki = 0;
+function ostatniaNiespodzianka() {
+  try { return Number(localStorage.getItem("niespodzianka")) || 0; } catch (e) { return pamiecNiespodzianki; }
+}
+function zapiszNiespodzianke(t) {
+  pamiecNiespodzianki = t;
+  try { localStorage.setItem("niespodzianka", String(t)); } catch (e) { /* zostaje w pamięci do zamknięcia aplikacji */ }
+}
+function formatCzasu(ms) {
+  const min = Math.max(1, Math.ceil(ms / 60000));
+  const h = Math.floor(min / 60), m = min % 60;
+  return h > 0 ? `${h} h ${m} min` : `${m} min`;
+}
+function stanNiespodzianki() {
+  const lista = listaProduktow();
+  if (!lista.length) return { stan: "brak", lista };
+  const minelo = Date.now() - ostatniaNiespodzianka();
+  if (minelo < 0 || minelo >= DOBA) return { stan: "gotowa", lista };
+  return { stan: "czeka", lista, zaIle: DOBA - minelo };
+}
+function rysujKota() {
+  const st = stanNiespodzianki();
+  const nastroj = st.stan === "gotowa" ? "swietuje" : st.stan === "czeka" ? "spiacy" : "ciekawy";
+  const ikona = $("kot-ikona");
+  if (ikona.dataset.nastroj !== nastroj) { ikona.innerHTML = kotSvg(nastroj); ikona.dataset.nastroj = nastroj; }   // stała ilustracja
+  $("kot-przycisk").classList.toggle("gotowa", st.stan === "gotowa");
+  $("kot-hint").textContent = st.stan === "gotowa" ? "Dotknij kota: czeka niespodzianka! 🎁"
+    : st.stan === "czeka" ? `Następna niespodzianka za ${formatCzasu(st.zaIle)}.`
+    : "Oznacz kupione produkty, a kot przygotuje niespodziankę.";
+}
+let ostatniFocus = null;
+function pokazNiespodzianke(lista) {
+  const top = lista[0];
+  $("n-kot").innerHTML = kotSvg("swietuje");
+  $("n-produkt").textContent = emotka(top.nazwa, "spozywcze");
+  $("n-tytul").textContent = top.nazwa;
+  $("n-opis").textContent = `Kupione już ${top.n} ${odmianaRazy(top.n)}!`;
+  $("n-dalej").textContent = lista.length > 1 ? "Dalej: " + lista.slice(1, 3).map((x) => `${x.nazwa} (${x.n})`).join(", ") : "";
+  const kon = $("konfetti");
+  kon.replaceChildren();
+  const kolory = ["#ff5d73", "#ffd23f", "#35c28a", "#3a9bff", "#7c5cff", "#ff9f43"];
+  for (let i = 0; i < 28; i++) {
+    const c = document.createElement("span");
+    c.style.left = `${Math.round(Math.random() * 100)}%`;
+    c.style.background = kolory[i % kolory.length];
+    c.style.animationDelay = `${(Math.random() * 2).toFixed(2)}s`;
+    c.style.animationDuration = `${(2.4 + Math.random() * 1.6).toFixed(2)}s`;
+    kon.append(c);
+  }
+  ostatniFocus = document.activeElement;
+  $("niespodzianka").classList.remove("ukryte");
+  $("n-zamknij").focus();
+}
+function zamknijNiespodzianke() {
+  $("niespodzianka").classList.add("ukryte");
+  $("konfetti").replaceChildren();
+  if (ostatniFocus && ostatniFocus.focus) ostatniFocus.focus();
+}
+$("kot-przycisk").addEventListener("click", () => {
+  const st = stanNiespodzianki();
+  if (st.stan !== "gotowa") return;                    // w pozostałych stanach tłumaczy to podpis obok kota
+  zapiszNiespodzianke(Date.now());                     // jedna niespodzianka na dobę
+  rysujKota();
+  pokazNiespodzianke(st.lista);
+});
+$("n-zamknij").addEventListener("click", zamknijNiespodzianke);
+$("niespodzianka").addEventListener("click", (e) => { if (e.target === $("niespodzianka")) zamknijNiespodzianke(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("niespodzianka").classList.contains("ukryte")) zamknijNiespodzianke(); });
+
+/* ---------- ekran statystyk ---------- */
+function wierszStatystyki(emoji, nazwa, n, max, dopisek) {
+  const w = document.createElement("li");
+  w.className = "stat-wiersz";
+  const nz = document.createElement("span");
+  nz.className = "nazwa";
+  nz.textContent = `${emoji} ${nazwa}`;
+  const li = document.createElement("span");
+  li.className = "liczba";
+  li.textContent = dopisek ? `${n} (${dopisek})` : String(n);
+  const sl = document.createElement("div");
+  sl.className = "slupek";
+  const wyp = document.createElement("span");
+  wyp.style.width = max > 0 ? `${Math.round(100 * n / max)}%` : "0%";
+  sl.append(wyp);
+  w.append(nz, li, sl);
+  return w;
+}
+function rysujStatystyki() {
+  const produkty = listaProduktow();
+  const kategorie = liczbyKategorii();
+  const razem = kategorie.reduce((suma, k) => suma + k.n, 0);
+  $("stat-opis").textContent = razem
+    ? `Łącznie kupionych produktów: ${razem}${statystyki && statystyki.od ? ` (od ${statystyki.od})` : ""}.`
+    : "Brak danych. Oznaczaj kupione produkty w zakładce Spożywcze, a policzę je tutaj.";
+  const kont = $("stat-kategorie");
+  kont.replaceChildren();
+  const maxK = Math.max(0, ...kategorie.map((k) => k.n));
+  for (const k of kategorie) {
+    const proc = razem ? `${Math.round(100 * k.n / razem)}%` : "0%";
+    kont.append(wierszStatystyki(k.emotka, k.nazwa, k.n, maxK, proc));
+  }
+  const ol = $("stat-produkty");
+  ol.replaceChildren();
+  const top = produkty.slice(0, 10);
+  top.forEach((p, i) => ol.append(wierszStatystyki(emotka(p.nazwa, "spozywcze"), `${i + 1}. ${p.nazwa}`, p.n, top[0].n, "")));
+  if (!top.length) {
+    const pusta = document.createElement("li");
+    pusta.className = "pusta";
+    pusta.textContent = "Jeszcze nic tu nie ma.";
+    ol.append(pusta);
+  }
+}
+$("otworz-statystyki").addEventListener("click", () => { rysujStatystyki(); pokaz("statystyki"); });
+$("wroc-ze-statystyk").addEventListener("click", () => pokaz("aplikacja"));
 
 let edytujeCene = false;
 function rysuj() {
@@ -653,7 +968,24 @@ function rysuj() {
     ul.append(li);
     return;
   }
-  for (const p of [...doKupienia, ...kupione]) {
+  let kolejnosc = [...doKupienia, ...kupione];
+  if (aktywna === "spozywcze") {
+    // grupy w ustalonej kolejności z nagłówkami; kupione (skreślone) na końcu, pod własnym nagłówkiem
+    kolejnosc = [];
+    for (const g of GRUPY) {
+      const w = doKupienia.filter((p) => grupaProduktu(p.tekst) === g.id);
+      if (w.length) kolejnosc.push({ naglowek: g }, ...w);
+    }
+    if (kupione.length) kolejnosc.push({ naglowek: { emotka: "✅", nazwa: "Kupione" } }, ...kupione);
+  }
+  for (const p of kolejnosc) {
+    if (p.naglowek) {
+      const h = document.createElement("li");
+      h.className = "grupa";
+      h.textContent = `${p.naglowek.emotka} ${p.naglowek.nazwa}`;
+      ul.append(h);
+      continue;
+    }
     const li = document.createElement("li");
     li.className = "pozycja" + (p.kupione ? " kupione" : "");
 
@@ -735,10 +1067,20 @@ $("nowa").addEventListener("input", odswiezPodglad);
 async function przelacz(p) {
   komunikat(kListy, "");
   try {
-    await updateDoc(doc(db, "lista", p.id), {
-      kupione: !p.kupione,
-      kupioneO: !p.kupione ? serverTimestamp() : null
-    });
+    const paczka = writeBatch(db);
+    const zmiana = { kupione: !p.kupione, kupioneO: !p.kupione ? serverTimestamp() : null };
+    if (p.kategoria === "spozywcze") {
+      // liczymy tylko zakupy spożywcze; odznaczenie przez pomyłkę cofa zliczenie
+      if (!p.kupione && !p.policzone) {
+        zmiana.policzone = true;
+        paczka.set(refStat(), przyrostStatystyk(p, 1), { merge: true });
+      } else if (p.kupione && p.policzone) {
+        zmiana.policzone = false;
+        paczka.set(refStat(), przyrostStatystyk(p, -1), { merge: true });
+      }
+    }
+    paczka.update(doc(db, "lista", p.id), zmiana);
+    await paczka.commit();
   } catch (e) { komunikat(kListy, opisBledu(e), "blad"); }
 }
 async function przenies_do(p, kategoria) {
@@ -821,7 +1163,8 @@ async function sprzataj() {
     try { await deleteDoc(doc(db, "lista", p.id)); } catch (e) { /* ktoś był szybszy */ }
   }
 }
-setInterval(() => { if (auth.currentUser && auth.currentUser.displayName) { rysuj(); sprzataj(); } }, 60 * 1000);
+setInterval(() => { if (auth.currentUser && auth.currentUser.displayName) { rysuj(); sprzataj(); rysujKota(); } }, 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && auth.currentUser) rysujKota(); });
 
 function start(uzytkownik) {
   $("powitanie").textContent = `Cześć, ${uzytkownik.displayName}! 👋`;
@@ -830,10 +1173,11 @@ function start(uzytkownik) {
   ustawZakladke(aktywna);
   const q = query(kolekcja, orderBy("utworzono", "asc"));
   odsubskrybuj = onSnapshot(q, (snap) => {
-    pozycje = snap.docs.map((d) => {
+    pozycje = snap.docs.filter((d) => !d.id.startsWith("_")).map((d) => {
       const x = d.data({ serverTimestamps: "estimate" });
       return {
         id: d.id,
+        policzone: !!x.policzone,
         tekst: String(x.tekst || ""),
         kategoria: x.kategoria === "online" || x.kategoria === "plany" ? x.kategoria : "spozywcze",
         cenaGr: Number.isInteger(x.cenaGr) ? x.cenaGr : null,
@@ -850,10 +1194,20 @@ function start(uzytkownik) {
     rysuj();
     komunikat(kListy, opisBledu(err), "blad");
   });
+  if (odsubStat) { odsubStat(); odsubStat = null; }
+  odsubStat = onSnapshot(refStat(), (snap) => {
+    statystyki = snap.exists() ? snap.data() : null;
+    rysujKota();
+    if (!$("statystyki").classList.contains("ukryte")) rysujStatystyki();
+  }, () => { /* bez statystyk lista działa normalnie */ });
+  rysujKota();
 }
 
 onAuthStateChanged(auth, (uzytkownik) => {
   if (odsubskrybuj) { odsubskrybuj(); odsubskrybuj = null; }
+  if (odsubStat) { odsubStat(); odsubStat = null; }
+  statystyki = null;
+  $("niespodzianka").classList.add("ukryte");
   pozycje = [];
   if (!uzytkownik) {
     poleHaslo.value = "";

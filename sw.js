@@ -1,7 +1,7 @@
 // Skrypt pomocniczy: pozwala zainstalować stronę jak aplikację i otwierać ją bez internetu.
 // Strona główna jest pobierana ZAWSZE najpierw z sieci (żeby aktualizacje docierały od razu),
 // a kopia z pamięci służy tylko wtedy, gdy nie ma internetu.
-const CACHE = "zakupy-v4";
+const CACHE = "zakupy-v5";
 const NA_START = [
   "./", "./index.html", "./manifest.webmanifest",
   "./ikona-192.png", "./ikona-512.png", "./apple-touch-icon.png"
@@ -9,7 +9,9 @@ const NA_START = [
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(NA_START)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then((c) => c.addAll(NA_START.map((u) => new Request(u, { cache: "reload" }))))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -40,7 +42,7 @@ self.addEventListener("fetch", (e) => {
   // pliki tej strony: najpierw sieć, a gdy jej brak, kopia z pamięci
   if (url.origin === self.location.origin) {
     e.respondWith(
-      fetch(zapytanie).then((odp) => {
+      fetch(zapytanie.url, { cache: "no-cache" }).then((odp) => {
         if (odp && odp.ok) { const kopia = odp.clone(); caches.open(CACHE).then((c) => c.put(zapytanie, kopia)); }
         return odp;
       }).catch(() => caches.match(zapytanie).then((t) => t || caches.match("./index.html")))
